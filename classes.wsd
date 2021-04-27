@@ -1,0 +1,136 @@
+@startuml
+
+class Vector2D {
+    + x: double
+    + y: double 
+
+    + opertor=(that: const Vector2D&): Vector2D&
+    + opertor=(that: Vector2D&&): Vector2D&
+
+    + opertor+=(that: const Vector2D&): Vector2D&
+    + opertor-=(that: const Vector2D&): Vector2D&
+    + opertor*=(num: double): Vector2D&
+    + opertor/=(num: double): Vector2D&
+
+    + dot(that: const Vector2D&): double
+
+    + length(): double
+    + sqrLength(): double
+
+    + normalize(): Vector2D
+    + normalized(): Vector2D&
+
+    + angleOX(): double
+}
+
+class PhaseCoordinate {
+    + coordinate: Vector2D
+    + velocity: Vector2D
+    + angle: double
+    + angular_velocity: double
+
+    + update(acciliration = Vector2D(0, 0, 0): Vector2D, angular_acceleration = 0: double): PhaseCoordinate
+    + updated(acciliration = Vector2D(0, 0, 0): Vector2D, angular_acceleration = 0: double): PhaseCoordinate&
+}
+
+Vector2D --* PhaseCoordinate
+
+abstract IShape {
+    # center: Vector2D
+    # ang: double
+
+    + {abstract} farthestPointInDirection(direction: const Vector2D): Vector2D
+
+    + {abstract} rotate(angle: double)
+
+    + setCenter(new_center: const Vector2D&): void
+    + setCenter(x: double, y: double): void
+    + move(delta: const Vector2D&): void
+    + move(x: double, y: double): void
+}
+
+Vector2D --* IShape
+
+class Polygon {
+    - points: std::vector<Vector2D>
+    + {abstract} farthestPointInDirection(direction: const Vector2D): Vector2D
+
+    + {abstract} rotate(angle: double)
+}
+
+class Circle {
+    - radius: double
+    + {abstract} farthestPointInDirection(direction: const Vector2D): Vector2D
+
+    + {abstract} rotate(angle: double)
+}
+
+Polygon --|> IShape
+Circle --|> IShape
+
+class Simplex {
+    - points: std::vector<Vector2D>
+
+    + add(point: Vector2D&&)
+    + nextDirection(): Vector2D
+}
+
+class Collision {
+    + a: IShape*
+    + b: IShape*
+
+    + isCollide(): bool
+}
+
+IShape --o Collision
+Collision -- Simplex
+
+Vector2D --* IBody
+
+abstract IBody {
+    + phase_coordinate: PhaseCoordinate
+    # mass: double
+    # shape: IShape*
+    # elasticity: double
+
+    + accelerationFromBody(that: const Body&): Vector2D
+    + {abstract} acciliration(): Vector2D
+    + {abstract} angularAcceleration(): double
+}
+
+class SimpleBody {
+    + {abstract} acciliration(): Vector2D
+    + {abstract} angularAcceleration(): double
+}
+
+SimpleBody --|> IBody
+
+class BodyTrajectory {
+    + trajectory: std::deque<PhaseCoordinate>
+    + body: IBody*
+
+    + reset()
+}
+
+BodyTrajectory *-- PhaseCoordinate
+BodyTrajectory o-- IBody
+
+class BodyManager {
+    - bodies_trajectories: std::vector<BodyTrajectory>
+
+    - min_size: size_t
+    - till_size: size_t
+    - current_size: size_t
+
+    - dt: double
+
+    + add(body: IBody*)
+    + reset()
+    + next()
+    - colculate()
+}
+
+BodyManager *-- BodyTrajectory
+BodyManager o-- IBody
+
+@enduml
